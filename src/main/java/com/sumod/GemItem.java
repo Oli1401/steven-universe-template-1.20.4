@@ -2,17 +2,22 @@ package com.sumod;
 
 import net.minecraft.item.Item;
 import net.minecraft.text.Text;
+import net.minecraft.text.TextColor;
 
 public class GemItem extends Item {
     private final String gemName;
+    private final TextColor gemColor;
 
-    public GemItem(Item.Settings settings, String gemName) {
+    // Constructor that accepts the gem name and color
+    public GemItem(Item.Settings settings, String gemName, TextColor gemColor) {
         super(settings);
-        this.gemName = gemName;  // Store the gem's name
+        this.gemName = gemName;
+        this.gemColor = gemColor;
     }
 
     @Override
     public Text getName() {
-        return Text.literal(gemName);  // Display the gem's custom name
+        // Return the gem name with the assigned color
+        return Text.literal(gemName).styled(style -> style.withColor(gemColor));
     }
 }

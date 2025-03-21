@@ -1,109 +1,50 @@
 package com.sumod;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.scoreboard.ScoreboardCriterion;
-import net.minecraft.scoreboard.ScoreboardObjective;
-import net.minecraft.scoreboard.ScoreboardPlayerScore;
-import net.minecraft.scoreboard.ServerScoreboard;
+import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.Team;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
+import net.minecraft.text.TextColor;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.network.chat.style.Style;
 
 public class GemNameManager {
-    private static final Map<UUID, String> playerGemCodes = new HashMap<>();
-    private static final Map<UUID, String> playerGemNicknames = new HashMap<>();
-    private static final Random random = new Random();
 
-    // Generate a random gem code like [2X7N]
-    public static String generateGemCode() {
-        StringBuilder code = new StringBuilder();
-        code.append("[");
+    // Example of gemType list - replace with your actual GemType enum or class
+    private static final GemType[] gemTypes = GemType.values();
 
-        // Add a random number from 1-9
-        code.append(random.nextInt(9) + 1);
+    public static void assignTeamToPlayer(MinecraftClient client, String playerName, GemType gemType) {
+        // Get the scoreboard
+        Scoreboard scoreboard = client.getServer().getScoreboard();
 
-        // Add a random letter from A-Z
-        code.append((char) (random.nextInt(26) + 'A'));
+        // Create a new team with the player's gem name
+        Team team = new Team(scoreboard, playerName); // Team constructor requires a scoreboard and a name
 
-        // Add a random number from 1-9
-        code.append(random.nextInt(9) + 1);
+        // Set color using TextColor and convert it to Formatting using toFormatting()
+        team.setColor(gemType.getColor().toFormatting()); // Use toFormatting() for color
 
-        // Add a random letter from A-Z
-        code.append((char) (random.nextInt(26) + 'A'));
+        // Register the team in the scoreboard
+        scoreboard.addTeam(team);
 
-        code.append("]");
-
-        return code.toString();
+        // Add the player to the team
+        scoreboard.addPlayerToTeam(playerName, team.getName()); // Add player to team by team name
     }
 
-    // Generate a gem nickname based on the player's username and gem type
-    public static String generateGemNickname(PlayerEntity player, GemType gemType) {
-        String playerName = player.getName().getString();
-        String gemName = gemType.getDisplayName();
-
-        // Simple nickname generation: Gem + Player's initial letter(s)
-        String nickname;
-        if (playerName.length() > 2) {
-            nickname = gemName + " " + playerName.substring(0, 2).toUpperCase();
-        } else {
-            nickname = gemName + " " + playerName.toUpperCase();
+    public static void handleGemColorUpdate(GemType gemType) {
+        // Example of how to display a message in the chat for a color update
+        String message = "Your gem color is now: " + gemType.toString();  // Use toString() instead of getName()
+        MinecraftClient client = MinecraftClient.getInstance();
+        ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
+        if (networkHandler != null) {
+            // Sending message to chat
+            networkHandler.sendChatMessage(message);
         }
-
-        return nickname;
     }
 
-    // Set a player's gem code and nickname
-    public static void setPlayerGemIdentity(MinecraftServer server, PlayerEntity player, GemType gemType) {
-        UUID playerId = player.getUuid();
-
-        // Generate or retrieve gem code
-        String gemCode = playerGemCodes.computeIfAbsent(playerId, k -> generateGemCode());
-
-        // Generate or retrieve gem nickname
-        String gemNickname = playerGemNicknames.computeIfAbsent(playerId, k -> generateGemNickname(player, gemType));
-
-        // Create or get team for this gem type
-        ServerScoreboard scoreboard = server.getScoreboard();
-        String teamName = "gem_" + gemType.name().toLowerCase();
-        Team team = scoreboard.getTeam(teamName);
-
-        if (team == null) {
-            // Create team if it doesn't exist
-            team = scoreboard.addTeam(teamName);
-            team.setColor(gemType.getColor());
-            team.setPrefix(Text.literal("[" + gemType.getDisplayName() + "] "));
-        }
-
-        // Add player to team if not already in it
-        if (!scoreboard.getPlayerTeam(player.getName().getString()).equals(team)) {
-            scoreboard.addPlayerToTeam(player.getName().getString(), team);
-        }
-
-        // Set suffix with gem code
-        team.setSuffix(Text.literal(" " + gemCode));
-
-        // Optionally set display name with nickname
-        player.setCustomName(Text.literal(gemNickname));
-        player.setCustomNameVisible(true);
-
-        // Store in maps for persistence
-        playerGemCodes.put(playerId, gemCode);
-        playerGemNicknames.put(playerId, gemNickname);
-    }
-
-    // Get a player's gem code
-    public static String getPlayerGemCode(UUID playerId) {
-        return playerGemCodes.getOrDefault(playerId, "");
-    }
-
-    // Get a player's gem nickname
-    public static String getPlayerGemNickname(UUID playerId) {
-        return playerGemNicknames.getOrDefault(playerId, "");
+    // Helper method to get a player's gem color based on their gem type
+    public static Text getGemNameText(GemType gemType) {
+        // Create a Style object using the TextColor, and apply it to the text
+        Style style = Style.EMPTY.withColor(gemType.getColor());
+        return Text.literal(gemType.toString()).setStyle(style); // Use Style to apply color
     }
 }
