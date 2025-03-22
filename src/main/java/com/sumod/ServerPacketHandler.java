@@ -1,6 +1,8 @@
 package com.sumod.network;
 
 import com.sumod.GemComponents;
+import net.minecraft.util.Identifier;
+import net.minecraft.server.network.ServerPlayerEntity;
 import com.sumod.GemType;
 import com.sumod.StevenUniverse;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;

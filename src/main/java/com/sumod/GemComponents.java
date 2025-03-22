@@ -2,20 +2,14 @@ package com.sumod;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import com.sumod.GemType;
-
 
 public class GemComponents {
 
     // Store gem information for players
     private static final Map<UUID, Gem> playerGems = new HashMap<>();
-
-    // Store gem items for players
     private static final Map<UUID, ItemStack> playerGemItems = new HashMap<>();
 
     // Assign a gem to a player
@@ -25,9 +19,14 @@ public class GemComponents {
     }
 
     // Get a player's gem type
-    public static GemType getGemType(PlayerEntity player) {
+    public static com.sumod.GemType getGemType(PlayerEntity player) {
         Gem gem = playerGems.get(player.getUuid());
-        return gem != null ? gem.getGemType() : GemType.NONE;
+        return gem != null ? gem.getGemType() : com.sumod.GemType.NONE;
+    }
+
+    // Get a player's full Gem object (new code)
+    public static Gem getPlayerGem(PlayerEntity player) {
+        return playerGems.get(player.getUuid());
     }
 
     // Get a player's gem item
@@ -35,37 +34,20 @@ public class GemComponents {
         return playerGemItems.getOrDefault(player.getUuid(), ItemStack.EMPTY);
     }
 
-    // Get the Gem object for a player
-    public static Gem getPlayerGem(PlayerEntity player) {
-        return playerGems.getOrDefault(player.getUuid(), new Gem(GemType.NONE));
-    }
-
-    // You may need to add more methods to manage player gem data,
-    // such as removing gems, checking if a player has a gem, etc.
-
-    // Example of a Gem class with GemType
+    // Gem class with com.sumod.GemType
     public static class Gem {
-        private GemType gemType;
+        private com.sumod.GemType gemType;
 
-        public Gem(GemType gemType) {
+        public Gem(com.sumod.GemType gemType) {
             this.gemType = gemType;
         }
 
-        public GemType getGemType() {
+        public com.sumod.GemType getGemType() {
             return gemType;
         }
 
-        public void setGemType(GemType gemType) {
+        public void setGemType(com.sumod.GemType gemType) {
             this.gemType = gemType;
         }
-    }
-
-    // Enum to represent different types of gems
-    public enum GemType {
-        NONE,
-        SAPPHIRE,
-        RUBY,
-        AMETHYST,
-        // Add more gem types here as needed
     }
 }

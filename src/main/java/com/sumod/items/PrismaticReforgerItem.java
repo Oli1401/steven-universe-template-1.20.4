@@ -1,7 +1,5 @@
 package com.sumod.items;
 
-import com.sumod.screen.GemSelectionScreen;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -17,10 +15,14 @@ public class PrismaticReforgerItem extends Item {
 
     @Override
     public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
-        if (world.isClient) {
-            // Open the gem selection screen on the client side
-            MinecraftClient.getInstance().setScreen(new GemSelectionScreen());
+        if (world.isClient()) { // Ensure this code runs only on the client
+            handleClientUse();
         }
         return TypedActionResult.success(player.getStackInHand(hand));
+    }
+
+    private void handleClientUse() {
+        // Delegate the client-specific action to a client-side proxy
+        com.sumod.client.ClientUtils.openGemSelectionScreen();
     }
 }

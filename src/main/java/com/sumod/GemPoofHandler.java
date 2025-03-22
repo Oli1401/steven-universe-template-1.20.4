@@ -34,10 +34,10 @@ public class GemPoofHandler {
     // Check if a player would die, and poof them instead
     public static boolean handlePlayerDamage(PlayerEntity player, DamageSource source, float amount) {
         // Get the player's gem type
-        GemComponents.GemType gemType = GemComponents.getPlayerGem(player).getGemType();
+        com.sumod.GemType gemType = GemComponents.getPlayerGem(player).getGemType();
 
         // If player has no gem or is already poofed, let vanilla handle it
-        if (gemType == GemComponents.GemType.NONE || isPlayerPoofed(player.getUuid())) {
+        if (gemType == com.sumod.GemType.NONE || isPlayerPoofed(player.getUuid())) {
             return false;
         }
 
