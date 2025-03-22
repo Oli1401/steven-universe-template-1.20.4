@@ -1,4 +1,4 @@
-package com.sumod.networking;
+package com.sumod;
 
 import com.sumod.StevenUniverse;
 import net.minecraft.util.Identifier;

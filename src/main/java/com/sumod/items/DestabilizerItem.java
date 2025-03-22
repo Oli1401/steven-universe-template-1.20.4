@@ -1,4 +1,4 @@
-package com.sumod;
+package com.sumod.items;
 
 import net.minecraft.item.Item;
 
