@@ -4,6 +4,7 @@ import net.minecraft.text.Text;
 import net.minecraft.text.TextColor;
 
 public enum GemType {
+    NONE("None", TextColor.fromRgb(0x000000)),  // NONE GemType with no color (black or a default color)
     SAPPHIRE("Sapphire", TextColor.fromRgb(0x1D4E89)),
     RUBY("Ruby", TextColor.fromRgb(0x9B1B30)),
     PERIDOT("Peridot", TextColor.fromRgb(0xB6E13E)),

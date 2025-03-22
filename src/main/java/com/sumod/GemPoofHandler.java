@@ -2,7 +2,9 @@ package com.sumod;
 
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.particle.ItemStackParticleEffect;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
@@ -12,6 +14,7 @@ import net.minecraft.util.math.Vec3d;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 
 public class GemPoofHandler {
@@ -21,16 +24,20 @@ public class GemPoofHandler {
     // Map to track when players were poofed (to track regeneration time)
     private static final Map<UUID, Long> poofTimestamps = new HashMap<>();
 
-    // Time in milliseconds for a gem to reform (5 minutes)
-    private static final long REFORM_TIME = 5 * 60 * 1000;
+    // Random instance for generating random poof timer
+    private static final Random random = new Random();
+
+    // Minimum and maximum poof timer in milliseconds
+    private static final long MIN_POOF_TIME = 30 * 1000; // 30 seconds
+    private static final long MAX_POOF_TIME = 60 * 1000; // 1 minute
 
     // Check if a player would die, and poof them instead
     public static boolean handlePlayerDamage(PlayerEntity player, DamageSource source, float amount) {
         // Get the player's gem type
-        GemType gemType = GemComponents.getPlayerGem(player).getGemType();
+        GemComponents.GemType gemType = GemComponents.getPlayerGem(player).getGemType();
 
         // If player has no gem or is already poofed, let vanilla handle it
-        if (gemType == GemType.NONE || isPlayerPoofed(player.getUuid())) {
+        if (gemType == GemComponents.GemType.NONE || isPlayerPoofed(player.getUuid())) {
             return false;
         }
 
@@ -57,7 +64,10 @@ public class GemPoofHandler {
 
         // Store the player's position
         poofedPlayers.put(playerId, player.getPos());
-        poofTimestamps.put(playerId, System.currentTimeMillis());
+
+        // Generate a random time for the poof (between 30 seconds and 1 minute)
+        long poofTime = MIN_POOF_TIME + random.nextInt((int) (MAX_POOF_TIME - MIN_POOF_TIME));
+        poofTimestamps.put(playerId, System.currentTimeMillis() + poofTime);
 
         // Play poof effects
         world.spawnParticles(
@@ -79,7 +89,7 @@ public class GemPoofHandler {
         player.changeGameMode(net.minecraft.world.GameMode.SPECTATOR);
 
         // Send message
-        player.sendMessage(Text.literal("You have been poofed! You'll reform in 5 minutes."), true);
+        player.sendMessage(Text.literal("You have been poofed! You'll reform soon..."), true);
 
         // Broadcast poof message
         world.getServer().getPlayerManager().broadcast(
@@ -106,11 +116,11 @@ public class GemPoofHandler {
         );
 
         // Play glass particle effects
-        world.spawnParticles(
-                ParticleTypes.ITEM_CRACK,
-                pos.getX(), pos.getY() + 0.5, pos.getZ(),
-                50, 0.5, 0.5, 0.5, 0.1
-        );
+        ItemStack gemItem = GemComponents.getGemItem(player);  // Ensure gemItem is obtained correctly
+        ItemStackParticleEffect particleEffect = new ItemStackParticleEffect(ParticleTypes.ITEM, gemItem);
+
+        // Spawn the particle effects
+        world.spawnParticles(particleEffect, pos.getX(), pos.getY() + 0.5, pos.getZ(), 50, 0.5, 0.5, 0.5, 0.1);
 
         // Actually kill the player
         player.setHealth(0);
@@ -134,10 +144,18 @@ public class GemPoofHandler {
             return;
         }
 
-        // Get the player's stored position
-        Vec3d pos = poofedPlayers.get(playerId);
+        // Get the gem item for particle effects
+        ItemStack gemItem = GemComponents.getGemItem(player);
 
-        // Teleport player back to their gem position
+        // Create a particle effect with the gem item
+        ItemStackParticleEffect particleEffect = new ItemStackParticleEffect(ParticleTypes.ITEM, gemItem);
+        ServerWorld world = player.getServerWorld();
+
+        // Spawn particles with the gem item effect
+        world.spawnParticles(particleEffect, player.getX(), player.getY() + 1.0, player.getZ(), 30, 0.5, 0.5, 0.5, 0.1);
+
+        // Additional code for the reforming process...
+        Vec3d pos = poofedPlayers.get(playerId);
         player.teleport(pos.getX(), pos.getY(), pos.getZ());
 
         // Return to survival mode
@@ -149,13 +167,6 @@ public class GemPoofHandler {
         // Clear hunger
         player.getHungerManager().setFoodLevel(20);
         player.getHungerManager().setSaturationLevel(20.0f);
-
-        // Play reform effects
-        player.getServerWorld().spawnParticles(
-                ParticleTypes.HAPPY_VILLAGER,
-                pos.getX(), pos.getY() + 1.0, pos.getZ(),
-                20, 0.5, 0.5, 0.5, 0.1
-        );
 
         // Remove from poofed players
         poofedPlayers.remove(playerId);
@@ -177,7 +188,7 @@ public class GemPoofHandler {
         long currentTime = System.currentTimeMillis();
 
         // If enough time has passed
-        if (currentTime - poofTime >= REFORM_TIME) {
+        if (currentTime >= poofTime) {
             reformPlayer(player);
         }
     }
